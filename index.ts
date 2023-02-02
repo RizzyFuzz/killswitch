@@ -1,17 +1,17 @@
 //@ts-nocheck
-import express from 'express'
-import { Request, Response } from "express";
-import path from "path"
-import fs from "fs"
-import Logger from './utils/logger'
-import constants from './constants';
+const express = require('express')
+const { Request, Response } = require("express");
+const path = require("path")
+const fs = require("fs")
+const Logger = require('./utils/logger')
+const constants = require('./constants');
 
-const app = new express()
+const app = express()
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
 // ! Censor the API Key if it's provided
-app.use((req: Request, res: Response, next: any) => {
+app.use((req, res, next) => {
     let querykey
     let bodykey
     if (req.path === '/log') return next()
@@ -35,18 +35,18 @@ app.use((req: Request, res: Response, next: any) => {
     next()
 })
 // ! Redirect to configured redirect site (Killswitch Wiki by Default)
-app.get('/', async (req: Request, res: Response) => {
+app.get('/', (req, res) => {
     res.redirect(constants.redirect)
 })
 
 // ! Route Imports
 fs.readdir(path.join(__dirname, "routes"), (err, files) => {
-    let r: any[] = []
+    let r = []
     files.forEach(file => {
-        if (file.endsWith("ts")) return;
+        if (file.endsWith("js")) return;
         let pathstring = path.join(__dirname, "routes", file)
-        let { handler, paths } = require(pathstring)
-        r.push({ handler, paths })
+        let route = require(pathstring)
+        r.push(route)
     })
     r.forEach(route => {
         app.use(route.paths, route.handler)
@@ -54,7 +54,7 @@ fs.readdir(path.join(__dirname, "routes"), (err, files) => {
 })
 
 // ! Provide App Log if wanted (main file by default, erorr if passed ?error=true)
-//app.get("/log", async (req, res) => {
+//app.get("/log", (req, res) => {
 //    fs.readFile(`${req.query.error ? constants.error : constants.log}`, 'utf8', function (err, data) {
 //        if (err) throw err;
 //        res.set({ 'Content-Type': 'text/plain' })
